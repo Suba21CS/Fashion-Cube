@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Liked Products</title>
+  <link rel="stylesheet" href="/static/style.css" />
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .product-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 20px;
+    }
+
+    .product {
+      border: 1px solid #ccc;
+      padding: 15px;
+      border-radius: 10px;
+      text-align: center;
+      background: #f9f9f9;
+    }
+
+    .product img {
+      max-width: 100%;
+      height: 180px;
+      object-fit: cover;
+      border-radius: 5px;
+    }
+
+    .product button {
+      margin: 8px 5px 0 5px;
+      padding: 8px 12px;
+      background-color: #333;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .product button:hover {
+      background-color: #555;
+    }
+
+    .product button.unlike {
+      background-color: #c0392b;
+    }
+
+    .empty-message {
+      text-align: center;
+      color: #666;
+      font-size: 1.2rem;
+      margin-top: 50px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1 style="color:black">❤️ Your Liked Products</h1>
+  <div class="product-grid" id="likedGrid"></div>
+  <p id="emptyMessage" class="empty-message" style="display: none;">You haven't liked any products yet.</p>
+
+  <script>
+    let liked = JSON.parse(localStorage.getItem("liked")) || [];
+    const grid = document.getElementById("likedGrid");
+    const emptyMessage = document.getElementById("emptyMessage");
+
+    function renderLikedProducts() {
+      grid.innerHTML = "";
+      liked = JSON.parse(localStorage.getItem("liked")) || [];
+
+      if (liked.length === 0) {
+        emptyMessage.style.display = "block";
+        return;
+      }
+
+      emptyMessage.style.display = "none";
+
+      liked.forEach((product, index) => {
+        const div = document.createElement("div");
+        div.className = "product";
+        div.innerHTML = `
+          <img src="${product.imageUrl}" alt="${product.name}">
+          <h3>${product.name}</h3>
+          <p>Size: ${product.size || 'N/A'}</p>
+          <p><strong>₹${product.price?.toFixed(2) || '0.00'}</strong></p>
+          <button onclick="addToCart('${escapeStr(product.name)}', ${product.price}, '${escapeStr(product.imageUrl)}', '${escapeStr(product.size)}')">Add to Cart</button>
+          <button class="unlike" onclick="unlikeProduct(${index})">Unlike</button>
+        `;
+        grid.appendChild(div);
+      });
+    }
+
+    function escapeStr(str) {
+      return String(str || "").replace(/'/g, "\\'").replace(/"/g, "&quot;");
+    }
+
+    function addToCart(name, price, imageUrl, size) {
+      let cart = JSON.parse(localStorage.getItem("cart")) || [];
+      const existing = cart.find(item => item.name === name && item.size === size);
+
+      if (existing) {
+        existing.quantity += 1;
+      } else {
+        cart.push({ name, price, imageUrl, size, quantity: 1 });
+      }
+
+      localStorage.setItem("cart", JSON.stringify(cart));
+      alert("Added to cart!");
+    }
+
+    function unlikeProduct(index) {
+      liked.splice(index, 1);
+      localStorage.setItem("liked", JSON.stringify(liked));
+      renderLikedProducts();
+    }
+
+    renderLikedProducts();
+  </script>
+</body>
+</html>

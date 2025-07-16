@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Fashion Cube</title>
+  <link rel="stylesheet" href="/static/style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    .auth-overlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100vh;
+      background-color: rgba(255, 255, 255, 0.7);
+      backdrop-filter: blur(5px);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+    }
+
+    .auth-box {
+      background: rgba(255, 255, 255, 0.9);
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 0 12px rgba(0, 0, 0, 0.2);
+      width: 320px;
+      text-align: center;
+    }
+
+    .auth-box input {
+      width: 100%;
+      margin: 10px 0;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+
+    .auth-box button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      background-color: #333;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .auth-box button:hover {
+      background-color: #555;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .product-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 20px;
+      padding: 20px;
+    }
+
+    .product {
+      background: #f9f9f9;
+      padding: 15px;
+      border-radius: 10px;
+      text-align: center;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+
+    .product img {
+      max-width: 100%;
+      height: 180px;
+      object-fit: cover;
+      border-radius: 5px;
+    }
+
+    .product select, .product button {
+      margin-top: 10px;
+      padding: 8px 12px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      font-size: 0.9rem;
+    }
+
+    .product button {
+      background-color: #333;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+    }
+
+    .product button:hover {
+      background-color: #555;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Auth Overlay -->
+  <div id="authOverlay" class="auth-overlay">
+    <div class="auth-box" id="authBox">
+      <h2>Register</h2>
+      <input type="text" id="name" placeholder="Name" />
+      <input type="email" id="email" placeholder="Email" />
+      <input type="password" id="password" placeholder="Password" />
+      <button onclick="registerUser()">Register</button>
+      <p>Already have an account? <a href="#" onclick="showLoginForm()">Login</a></p>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div id="mainContent">
+    <header>
+      <nav class="navbar">
+        <div class="logo">Fashion Cube</div>
+        <div class="nav-links">
+          <a href="#home">Home</a>
+          <a href="#about">About</a>
+          <a href="#products">Products</a>
+          <a href="/static/womens.html">Womens</a>
+          <a href="/static/Mens.html">Mens</a>
+          <a href="/static/Kids.html">Kids</a>
+          <a href="#" onclick="login()">Login</a>
+          <a href="liked.html">❤️</a>
+          <a href="cart.html">🛒 Cart</a>
+
+        </div>
+      </nav>
+    </header>
+
+    <section id="home" class="hero-section">
+      <div class="hero-content">
+        <h1>Style That Speaks</h1>
+        <p>Explore the Latest Trends in Fashion</p>
+        <button>Shop Now</button>
+      </div>
+    </section>
+
+    <section id="about" class="about-section">
+      <div class="about-content">
+        <h2>About Us</h2>
+        <p>Welcome to <strong>Fashion Cube</strong> – where style meets simplicity.</p>
+        <p>We believe fashion should be expressive, inclusive, and accessible. Whether you're dressing up for a special occasion or everyday essentials, our collections inspire and elevate your look.</p>
+        <p><strong>Why Choose Us?</strong><br>✔️ Handpicked Styles<br>✔️ Affordable Pricing<br>✔️ Seamless Shopping<br>✔️ Fast Delivery</p>
+        <p>Thank you for choosing Fashion Cube. Your fashion journey starts here!</p>
+      </div>
+    </section>
+
+    <section class="products" id="products">
+      <h2>Our Products</h2>
+      <div class="product-grid" id="productGrid"></div>
+    </section>
+  </div>
+
+  <script>
+    const user = JSON.parse(localStorage.getItem("user"));
+    const authOverlay = document.getElementById("authOverlay");
+
+    if (user && user.email) {
+      authOverlay.classList.add("hidden");
+      fetchProducts();
+    }
+
+    function showLoginForm() {
+      const box = document.getElementById("authBox");
+      box.innerHTML = `
+        <h2>Login</h2>
+        <input type="email" id="email" placeholder="Email" />
+        <input type="password" id="password" placeholder="Password" />
+        <button onclick="loginUser()">Login</button>
+        <p>Don't have an account? <a href="#" onclick="showRegisterForm()">Register</a></p>
+      `;
+    }
+
+    function showRegisterForm() {
+      const box = document.getElementById("authBox");
+      box.innerHTML = `
+        <h2>Register</h2>
+        <input type="text" id="name" placeholder="Name" />
+        <input type="email" id="email" placeholder="Email" />
+        <input type="password" id="password" placeholder="Password" />
+        <button onclick="registerUser()">Register</button>
+        <p>Already have an account? <a href="#" onclick="showLoginForm()">Login</a></p>
+      `;
+    }
+
+    async function registerUser() {
+      const name = document.getElementById("name").value;
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      if (!name || !email || !password) {
+        alert("Please fill all fields.");
+        return;
+      }
+      try {
+        const res = await fetch("http://localhost:53978/users/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, email, password })
+        });
+        if (res.ok) {
+          const data = await res.json();
+          localStorage.setItem("user", JSON.stringify(data));
+          authOverlay.classList.add("hidden");
+          fetchProducts();
+        } else {
+          alert("Registration failed.");
+        }
+      } catch (err) {
+        console.error(err);
+        alert("Error during registration.");
+      }
+    }
+
+    function loginUser() {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      if (!email || !password) {
+        alert("Please enter email and password.");
+        return;
+      }
+
+      fetch("http://localhost:53978/users/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password })
+      })
+      .then(async res => {
+        if (res.ok) {
+          const data = await res.json();
+          localStorage.setItem("user", JSON.stringify(data));
+          authOverlay.classList.add("hidden");
+          fetchProducts();
+        } else {
+          alert("Login failed.");
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        alert("Login error.");
+      });
+    }
+
+    function login() {
+      localStorage.removeItem("user");
+      location.reload();
+    }
+
+    async function fetchProducts() {
+      try {
+        const res = await fetch("http://localhost:53978/products/all");
+        const products = await res.json();
+        const grid = document.getElementById("productGrid");
+        grid.innerHTML = "";
+
+        products.forEach(product => {
+          const id = product.id;
+          const name = product.name || "Unnamed";
+          const price = Number(product.price) || 0;
+          const imageUrl = `http://localhost:53978${product.imageUrl || ""}`;
+          const description = product.description || "";
+
+          const div = document.createElement("div");
+          div.className = "product";
+
+          div.innerHTML = `
+            <img src="${imageUrl}" alt="${name}">
+            <h3>${name}</h3>
+            <p>${description}</p>
+            <p><strong>₹${price.toFixed(2)}</strong></p>
+            <label for="size-${id}">Size:</label>
+            <select id="size-${id}">
+              <option value="S">S</option>
+              <option value="M">M</option>
+              <option value="L">L</option>
+              <option value="XL">XL</option>
+              <option value="XXL">XXL</option>
+            </select>
+            <button onclick="addToCart('${name}', ${price}, '${imageUrl}', 'size-${id}')">Add to Cart</button>
+            <button onclick="likeProduct('${id}', '${name}', ${price}, '${imageUrl}', 'size-${id}')">❤️ Like</button>
+          `;
+          grid.appendChild(div);
+        });
+      } catch (err) {
+        console.error("Error loading products", err);
+      }
+    }
+
+    function addToCart(name, price, imageUrl, sizeSelectId) {
+      const size = document.getElementById(sizeSelectId).value;
+      let cart = JSON.parse(localStorage.getItem("cart")) || [];
+
+      const existing = cart.find(item => item.name === name && item.size === size);
+
+      if (existing) {
+        existing.quantity += 1;
+      } else {
+        cart.push({ name, price, imageUrl, size, quantity: 1 });
+      }
+
+      localStorage.setItem("cart", JSON.stringify(cart));
+      window.location.href = "cart.html";
+    }
+
+    function likeProduct(id, name, price, imageUrl, sizeSelectId) {
+      const size = document.getElementById(sizeSelectId).value;
+      let liked = JSON.parse(localStorage.getItem("liked")) || [];
+
+      if (!liked.some(p => p.id === id && p.size === size)) {
+        liked.push({ id, name, price, imageUrl, size });
+        localStorage.setItem("liked", JSON.stringify(liked));
+        alert("Product added to liked list!");
+      } else {
+        alert("Already liked!");
+      }
+    }
+  </script>
+  <footer style="
+  background-color: #333;
+  color: white;
+  text-align: center;
+  padding: 20px 10px;
+  margin-top: 40px;
+  font-size: 0.9rem;
+">
+  <div>
+    <p>&copy; 2025 Fashion Cube. All rights reserved.</p>
+    <p>
+      Follow us on 
+      <a href="#" style="color: #fff; text-decoration: underline;">Instagram</a> | 
+      <a href="#" style="color: #fff; text-decoration: underline;">Facebook</a> | 
+      <a href="#" style="color: #fff; text-decoration: underline;">Twitter</a>
+    </p>
+    <p><a href="#" style="color: #fff; text-decoration: underline;">Privacy Policy</a> | <a href="#" style="color: #fff; text-decoration: underline;">Terms & Conditions</a></p>
+  </div>
+</footer>
+
+</body>
+</html>

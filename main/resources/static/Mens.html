@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Men's Collection</title>
+  <link rel="stylesheet" href="/static/style.css" />
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: #f9f9f9;
+      padding: 20px;
+      margin: 0;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 40px;
+      color: #333;
+    }
+
+    .product-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 25px;
+    }
+
+    .product {
+      background: #fff;
+      padding: 15px;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      text-align: center;
+      transition: transform 0.3s ease;
+    }
+
+    .product:hover {
+      transform: scale(1.03);
+    }
+
+    .product img {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+      border-radius: 8px;
+    }
+
+    .product h3 {
+      font-size: 1.2rem;
+      margin: 10px 0 5px;
+      color: #111;
+    }
+
+    .product p {
+      font-size: 0.95rem;
+      color: #555;
+    }
+
+    .product select, .product button {
+      margin-top: 10px;
+      padding: 8px 12px;
+      border: none;
+      border-radius: 6px;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    .product select {
+      background-color: #eee;
+    }
+
+    .product button {
+      background-color: #333;
+      color: #fff;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    .product button:hover {
+      background-color: #555;
+    }
+
+    .product .like-btn {
+      background-color: #ff3e6c;
+      margin-left: 8px;
+    }
+
+    .product .like-btn:hover {
+      background-color: #e6345a;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Men's Collection</h1>
+  <div id="productGrid" class="product-grid"></div>
+
+  <script>
+    function escapeStr(str) {
+      return String(str || "").replace(/'/g, "\\'").replace(/"/g, "&quot;");
+    }
+
+    fetch("http://localhost:53978/gens/all")
+      .then(res => res.json())
+      .then(data => {
+        const grid = document.getElementById("productGrid");
+        data.forEach(product => {
+          const sizeSelectId = `size-${product.id}`;
+          const fullImageUrl = `http://localhost:53978${product.imageUrl}`;
+
+          const div = document.createElement("div");
+          div.className = "product";
+          div.innerHTML = `
+            <img src="${fullImageUrl}" alt="${product.name}" onerror="this.src='/static/placeholder.jpg'">
+            <h3>${product.name}</h3>
+            <p>${product.description}</p>
+            <p><strong>₹${product.price}</strong></p>
+
+            <label for="${sizeSelectId}"><strong>Size:</strong></label>
+            <select id="${sizeSelectId}">
+              ${product.sizes?.map(s => `<option value="${s.size}">${s.size}</option>`).join('') || '<option>N/A</option>'}
+            </select><br/>
+
+            <button onclick="addToCart(${product.id}, '${escapeStr(product.name)}', ${product.price}, '${fullImageUrl}', '${sizeSelectId}')">Add to Cart</button>
+            <button class="like-btn" onclick="likeProduct(${product.id}, '${escapeStr(product.name)}', ${product.price}, '${fullImageUrl}', '${sizeSelectId}')">❤️ Like</button>
+          `;
+          grid.appendChild(div);
+        });
+      });
+
+    function likeProduct(id, name, price, imageUrl, sizeSelectId) {
+      const size = document.getElementById(sizeSelectId).value;
+      let liked = JSON.parse(localStorage.getItem("liked")) || [];
+
+      if (!liked.some(p => p.id === id && p.size === size)) {
+        liked.push({ id, name, price, imageUrl, size });
+        localStorage.setItem("liked", JSON.stringify(liked));
+        alert("Product added to liked list!");
+      } else {
+        alert("Already liked!");
+      }
+    }
+
+    function addToCart(id, name, price, imageUrl, sizeSelectId) {
+      const size = document.getElementById(sizeSelectId).value;
+      let cart = JSON.parse(localStorage.getItem("cart")) || [];
+
+      const existing = cart.find(item => item.id === id && item.size === size);
+      if (existing) {
+        existing.quantity += 1;
+      } else {
+        cart.push({ id, name, price, imageUrl, size, quantity: 1 });
+      }
+
+      localStorage.setItem("cart", JSON.stringify(cart));
+      alert("Added to cart!");
+    }
+  </script>
+</body>
+</html>

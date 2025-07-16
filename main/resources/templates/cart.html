@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Cart - Fashion Store</title>
+  <link rel="stylesheet" href="/static/style.css" />
+  <style>
+    body { font-family: 'Poppins', sans-serif; }
+    .cart-container {
+      max-width: 900px;
+      margin: 40px auto;
+      padding: 20px;
+      background: #fff;
+      border-radius: 10px;
+    }
+    .cart-item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 20px;
+      border-bottom: 1px solid #ccc;
+      padding-bottom: 10px;
+    }
+    .cart-item img {
+      width: 100px;
+      height: 120px;
+      object-fit: cover;
+      border-radius: 8px;
+      margin-right: 20px;
+    }
+    .cart-item-info { flex: 1; 
+    color:black;}
+    .cart-total {
+      text-align: right;
+      font-size: 1.3rem;
+      margin-top: 20px;
+      font-weight: bold;
+    }
+    .buy-now-btn {
+      display: block;
+      margin: 20px auto 0;
+      padding: 12px 30px;
+      background-color: green;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.6);
+      justify-content: center;
+      align-items: center;
+      z-index: 10000;
+    }
+    .modal-content {
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      width: 400px;
+      max-width: 90%;
+    }
+    .modal input, .modal select {
+      width: 100%;
+      padding: 8px;
+      margin: 8px 0;
+    }
+    .modal button {
+      width: 100%;
+      padding: 10px;
+      background-color: #333;
+      color: black;
+      border: none;
+      border-radius: 5px;
+    }
+    .empty-message {
+      text-align: center;
+      font-size: 1.2rem;
+      color: #666;
+    }
+    .qty-controls {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      margin-top: 5px;
+    }
+    .qty-controls button {
+      padding: 3px 8px;
+      border: none;
+      background-color: #333;
+      color: white;
+      cursor: pointer;
+      border-radius: 3px;
+    }
+    .remove-btn {
+      background-color: red;
+    }
+    .remove-btn:hover {
+      background-color: darkred;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="cart-container">
+    <h2 style="color: black;">Your Cart</h2>
+
+    <div id="cartItems"></div>
+    <div class="cart-total" id="cartTotal"></div>
+    <button id="buyNowBtn" class="buy-now-btn">Buy Now</button>
+  </div>
+
+  <!-- Delivery Modal -->
+  <div class="modal" id="deliveryModal">
+    <div class="modal-content">
+      <h3>Enter Delivery Details</h3>
+      
+      <input type="text" id="orderName" placeholder="Full Name" />
+      <input type="email" id="orderEmail" placeholder="Email" />
+      <input type="text" id="orderAddress" placeholder="Address" />
+      <input type="text" id="orderPincode" placeholder="Pincode" />
+  
+      <select id="deliveryType" onchange="togglePaymentFields()">
+        <option value="COD">Offline Delivery (Cash on Delivery)</option>
+        <option value="GOOGLE_PAY">Online - Google Pay</option>
+        <option value="PHONE_PE">Online - PhonePe</option>
+      </select>
+  
+      <input type="text" id="upiId" placeholder="Enter UPI ID (Online only)" style="display: none;" />
+      
+      <button onclick="placeOrder()">Place Order</button>
+    </div>
+  </div>
+  
+
+  <script>
+    let cart = JSON.parse(localStorage.getItem("cart")) || [];
+    const cartItemsDiv = document.getElementById("cartItems");
+    const cartTotalDiv = document.getElementById("cartTotal");
+    const buyNowBtn = document.getElementById("buyNowBtn");
+    const deliveryModal = document.getElementById("deliveryModal");
+
+    function updateCartDisplay() {
+      cartItemsDiv.innerHTML = "";
+      cartTotalDiv.innerHTML = "";
+
+      if (cart.length === 0) {
+        cartItemsDiv.innerHTML = `<p class="empty-message">Your cart is empty.</p>`;
+        buyNowBtn.style.display = "none";
+        return;
+      }
+
+      let total = 0;
+      cart.forEach((item, index) => {
+        const name = item.name || "Unnamed";
+        const size = item.size || "-";
+        const price = Number(item.price || 0);
+        const quantity = item.quantity || 1;
+        const imageUrl = item.imageUrl || "";
+        const subtotal = price * quantity;
+        total += subtotal;
+
+        const itemDiv = document.createElement("div");
+        itemDiv.className = "cart-item";
+        itemDiv.innerHTML = `
+          <img src="${imageUrl}" alt="${name}">
+          <div class="cart-item-info">
+            <h3>${name}</h3>
+            <p><strong>Size:</strong> ${size}</p>
+            <p><strong>Price:</strong> ₹${price.toFixed(2)}</p>
+            <p><strong>Subtotal:</strong> ₹${subtotal.toFixed(2)}</p>
+            <div class="qty-controls">
+              <button onclick="changeQuantity(${index}, -1)">-</button>
+              <span>${quantity}</span>
+              <button onclick="changeQuantity(${index}, 1)">+</button>
+              <button class="remove-btn" onclick="removeItem(${index})">Remove</button>
+            </div>
+          </div>
+        `;
+        cartItemsDiv.appendChild(itemDiv);
+      });
+
+      cartTotalDiv.textContent = `Total: ₹${total.toFixed(2)}`;
+      buyNowBtn.style.display = "block";
+    }
+
+    function changeQuantity(index, delta) {
+      cart[index].quantity += delta;
+      if (cart[index].quantity <= 0) {
+        cart.splice(index, 1);
+      }
+      localStorage.setItem("cart", JSON.stringify(cart));
+      updateCartDisplay();
+    }
+
+    function removeItem(index) {
+      cart.splice(index, 1);
+      localStorage.setItem("cart", JSON.stringify(cart));
+      updateCartDisplay();
+    }
+
+    buyNowBtn.addEventListener("click", () => {
+      deliveryModal.style.display = "flex";
+    });
+
+    function togglePaymentFields() {
+      const method = document.getElementById("deliveryType").value;
+      document.getElementById("upiId").style.display = (method !== "COD") ? "block" : "none";
+    }
+
+    function placeOrder() {
+      const email = document.getElementById("orderEmail").value;
+      const address = document.getElementById("orderAddress").value;
+      const paymentMethod = document.getElementById("deliveryType").value;
+      const upiId = document.getElementById("upiId").value;
+      const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+      if (!email || !address || (paymentMethod !== "COD" && !upiId)) {
+        alert("Please fill all required fields.");
+        return;
+      }
+
+      const order = {
+        userName: email,
+        totalPrice: total,
+        paymentMethod,
+        status: "PENDING",
+        deliveryAddress: address,
+        upiId: upiId || ""
+      };
+
+      fetch("http://localhost:53978/orders/place", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(order)
+      })
+      .then(res => {
+        if (res.ok) {
+          cart.forEach(item => {
+            fetch("http://localhost:53978/cart/add", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                userName: email,
+                productName: item.name,
+                quantity: item.quantity
+              })
+            });
+          });
+
+          fetch(`http://localhost:53978/cart/clear/${email}`, {
+            method: "DELETE"
+          });
+
+          const deliveryDate = new Date();
+          deliveryDate.setDate(deliveryDate.getDate() + 5);
+          alert(`Order placed successfully! Expected delivery: ${deliveryDate.toDateString()}`);
+          localStorage.removeItem("cart");
+          window.location.reload();
+        } else {
+          alert("Order failed.");
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        alert("Error placing order.");
+      });
+    }
+
+    updateCartDisplay();
+  </script>
+</body>
+</html>
